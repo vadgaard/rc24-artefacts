@@ -1,0 +1,43 @@
+
+main()
+{
+  u32 v[2]; u32 k[4];
+  u32 tmpL, tmpR;
+
+  call read(v, k);
+  call encrypt(v, k);
+
+  tmpL += v[0];
+  tmpR += v[1];
+  printf("%u32 %u32\n", v[0], v[1]);
+  v[0] += tmpL;
+  v[1] += tmpR;
+  tmpL -= v[0];
+  tmpR -= v[1];
+
+  uncall encrypt(v, k);
+
+  uncall read(v, k);
+}
+
+read(u32 v[2], u32 k[4])
+{
+  scanf("%u32 %u32\n", v[0], v[1]);
+  scanf("%u32 %u32 %u32 %u32\n", k[0], k[1], k[2], k[3]);
+}
+
+encrypt (u32 v[2], u32 k[4]) {
+  u32 v0, v1, sum, k0, k1, k2, k3;
+  const u32 delta = 0x9E3779B9;          /* key schedule constant */
+  v0 <-> v[0]; v1 <-> v[1];                             /* set up */
+  k0 += k[0]; k1 += k[1]; k2 += k[2]; k3 += k[3];    /* cache key */
+  for (i=0; 32) {                            /* basic cycle start */
+    sum += delta;
+    v0 += ((v1<<4) + k0) ^ (v1 + sum) ^ ((v1>>5) + k1);
+    v1 += ((v0<<4) + k2) ^ (v0 + sum) ^ ((v0>>5) + k3);
+    i++;
+  }                                                  /* end cycle */
+  k0 -= k[0]; k1 -= k[1]; k2 -= k[2]; k3 -= k[3]; /* clear locals */
+  sum -= delta << 5;          /* alternatively, sum -= 0xC6EF3720 */
+  v[0] <-> v0; v[1] <-> v1;                /* return coded values */
+}

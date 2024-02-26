@@ -1,0 +1,106 @@
+main()
+{
+  u8 k[16]; // Key
+  u32 S[26], L[6], pt[2]; // Key expansion arrays and plaintext
+  u32 tmpL, tmpR;
+  call read(pt, k);
+  call setup(S, k, L);
+
+  call encrypt(S, pt);
+
+  /* Output ciphertext and ensure, that plaintext is not optimized away. */
+  tmpL += pt[0];
+  tmpR += pt[1];
+  printf("%u32 %u32\n", pt[0], pt[1]);
+  pt[0] += tmpL;
+  pt[1] += tmpR;
+  tmpL -= pt[0];
+  tmpR -= pt[1];
+
+  uncall encrypt(S, pt);
+  assert (pt[0] == 1);
+  assert (pt[1] == 2);
+
+  uncall setup(S, k, L);
+  uncall read(pt, k);
+}
+
+// Read input words and key from stdIn
+read(u32 pt[2], u8 k[16])
+{
+  scanf("%u32 %u32\n", pt[0],  pt[1]);
+  scanf("%u8 %u8 %u8 %u8\n", k[ 0], k[ 1], k[ 2], k[ 3]);
+  scanf("%u8 %u8 %u8 %u8\n", k[ 4], k[ 5], k[ 6], k[ 7]);
+  scanf("%u8 %u8 %u8 %u8\n", k[ 8], k[ 9], k[10], k[11]);
+  scanf("%u8 %u8 %u8 %u8\n", k[12], k[13], k[14], k[15]);
+}
+
+// Performs key expansion
+setup(u32 S[26], u8 k[16], u32 L[6])
+{
+  const u32 P = 0xB7E15163; // Magic constant
+  const u32 Q = 0x9E3779B9; // Magic constant
+
+  const u32 w = 32; // 32 bit words
+  const u32 u = 4;  //  4 byte words
+  const i32 t = 26; // Round subkeys 2(r+1)
+
+  const u32 b = 16; // 16 byte key
+  const u32 c = 4;  //  4 word key (b/u)
+
+  i8 i, j; // Index variables
+  u32 X, Y;
+
+  // Initialize L
+  for (i=b; 0){
+   i--;
+   L[i/u] <<= 8; L[i/u] += k[i];
+  }
+
+  // Initialize S
+  for (i=0; t){
+    S[i] += P + (i * Q);
+    i++;
+  }
+
+  for (l=0; 3*t) {
+    // X = S[i] = (S[i] + X + Y) <<< 3
+    S[i] += X + Y;
+    S[i] <<= 3;
+    if (l != 0) X -= S[((i-1) % t + t) % t]; // Zero X
+    X += S[i];
+
+    // Y = L[j] = (L[j] + X + Y) <<< (X + Y)
+    L[j] += X + Y;
+    L[j] <<= X + Y;
+    if (l != 0) Y -= L[((j-1) % c + c) % c]; // Zero Y
+    Y += L[j];
+
+    // Updating index- and loopvariables
+    i++; l++; j++;
+    if (l % t == 0) i -= t;
+    if (l % c == 0) j -= c;
+  }
+
+  // Clearing local variables
+  X -= S[t-1];
+  if (j != 0) Y -= L[j-1];
+  if (j == 0) Y -= L[c-1];
+  j -= 3*t - (3*t/c)*c; // Integer division
+}
+
+encrypt(u32 S[26], u32 pt[2])
+{
+  const u32 r = 12; // Rounds
+  u32 A, B;
+  A <-> pt[0]; B <-> pt[1];
+  A += S[0];
+  B += S[1];
+  for (i = 1; r+1) {
+    A ^= B; A <<= B; A += S[2*i];   // A = ((A^B) << B) + S[2*i];
+    B ^= A; B <<= A; B += S[2*i+1]; // B = ((B^A) << A) + S[2*i+1];
+
+    i++;
+  }
+  A <-> pt[0]; B <-> pt[1];
+}
